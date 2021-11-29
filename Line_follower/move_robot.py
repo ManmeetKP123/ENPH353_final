@@ -142,10 +142,19 @@ class robot_navigation:
 
 
             if (self.crosswalk == 1):
-              move.linear.x = 0.3
+              move.linear.x = 0.6
               move.angular.z = 0.1
               self.nav_pub.publish(move)
-              rospy.sleep(0.5)
+              rospy.sleep(0.55)
+              move.linear.x = 0.4
+              move.angular.z = 0.1
+              self.nav_pub.publish(move)
+              rospy.sleep(0.2)
+              move.linear.x = 0.2
+              move.angular.z = 0.3
+              self.nav_pub.publish(move)
+              self.crosswalk = 0
+              rospy.sleep(0.1)
               # move.linear.x = 0.3
               # move.angular.z = 0.7
               # self.nav_pub.publish(move)
