@@ -21,8 +21,8 @@ class robot_navigation:
     def __init__(self):
         self.nav_pub = rospy.Publisher("/R1/cmd_vel",Twist, queue_size=1)
         self.bridge = CvBridge()
-        self.nav_sub = rospy.Subscriber("/R1/pi_camera/image_raw",Image,self.callback)
-        self.red_line_cam = rospy.Subscriber("/R1/pi_camera/image_raw",Image,self.callback)
+        self.nav_sub = rospy.Subscriber("/R1/pi_camera/image_raw",Image,self.callback, queue_size = 1)
+        # self.red_line_cam = rospy.Subscriber("/R1/pi_camera/image_raw",Image,self.callback)
         self.plate_pub = rospy.Publisher("/license_plate", String, queue_size=1)
 
         self.P = 9.25 #previously was 7
@@ -101,23 +101,24 @@ class robot_navigation:
                 move.angular.z = 0
                 self.nav_pub.publish(move)
 
-                rospy.sleep(0.5)
-                if (self.angular_increase < 2):
-                  move.angular.z = 0.4
-                  self.angular_increase += 1
-                else:
-                  move.angular.z = 0
-                self.nav_pub.publish(move)
-                rospy.sleep(0.5)
+                rospy.sleep(0.7)
+                # if (self.angular_increase < 2):
+                #   move.angular.z = 0.4
+                #   self.angular_increase += 1
+                # else:
+                #   move.angular.z = 0
+                # self.nav_pub.publish(move)
+                # rospy.sleep(0.5)
 
                 if (self.detect_pedestrain(oneThird)):
                   self.count_ped += 1
                   self.no_ped = 0
+                  print("PEDESTRIAN")
                 else:
                   self.no_ped += 1
                   print("no ped count " + str(self.no_ped)) 
                 # self.detect_pedestrain(oneThird)
-                if (self.no_ped > 2 or self.count_ped > 2):
+                if (self.no_ped > 1 or self.count_ped > 3):
                   print("TIME TOOOOO MOVEEEEEE")
                   self.crosswalk = 1 
                   self.number_red_lines = 1
@@ -141,13 +142,13 @@ class robot_navigation:
 
 
             if (self.crosswalk == 1):
-              move.linear.x = 0.6
-              move.angular.z = 0
-              self.nav_pub.publish(move)
-              rospy.sleep(1)
               move.linear.x = 0.3
-              move.angular.z = 0.7
+              move.angular.z = 0.1
               self.nav_pub.publish(move)
+              rospy.sleep(0.5)
+              # move.linear.x = 0.3
+              # move.angular.z = 0.7
+              # self.nav_pub.publish(move)
               self.crosswalk = 0
               self.number_red_lines = 1
               img = self.bridge.imgmsg_to_cv2(data, "bgr8")
@@ -174,13 +175,13 @@ class robot_navigation:
       binary = cv2.bitwise_not(mask) # OR
       binary = cv2.bitwise_not(mask)
 
-      size = int(binary.shape[0] / 2.4)
+      size = int(binary.shape[0] / 1.2)
       croppedBin = binary[size: -1, :]
       cv2.imshow("binary cropped for red line ", croppedBin)
       cv2.waitKey(1)
       b = np.nonzero(croppedBin == 0)[0]
       
-      if (b.size != 0):
+      if (b.size > 120):
         print(b.size)
         print("found a red line")
         return True
