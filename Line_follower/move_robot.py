@@ -53,8 +53,8 @@ class robot_navigation:
     def callback(self,data):
         try:
           img = self.bridge.imgmsg_to_cv2(data, "bgr8")
-          cv2.imshow("image feed", img)
-          cv2.waitKey(2)
+          # cv2.imshow("image feed", img)
+          # cv2.waitKey(2)
           oneThird = img[360:-1, 445:835] #for all the functions just pass in this
 
           blurred = cv2.GaussianBlur(oneThird, (7, 7), 0)
@@ -193,8 +193,8 @@ class robot_navigation:
 
       size = int(binary.shape[0] / 1.2)
       croppedBin = binary[size: -1, :]
-      cv2.imshow("binary cropped for red line ", croppedBin)
-      cv2.waitKey(1)
+      # cv2.imshow("binary cropped for red line ", croppedBin)
+      # cv2.waitKey(1)
       b = np.nonzero(croppedBin == 0)[0]
       
       if (b.size > 120):

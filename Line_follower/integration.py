@@ -26,13 +26,12 @@ class image_converter:
 		self.image_pub = rospy.Publisher('/R1/cmd_vel', Twist, queue_size=1)
 		self.bridge = CvBridge()
 		self.image_sub = rospy.Subscriber("/R1/pi_camera/image_raw", Image, self.callback)
-		# self.plate_NN = models.load_model('/home/fizzer/Downloads/model.h5')
+		self.plate_NN = models.load_model('/home/fizzer/Downloads/model.h5')
 
 
 	def callback(self, data):
 		try:
 			img = self.bridge.imgmsg_to_cv2(data, "bgr8")
-			
 
 		except CvBridgeError as e:
 			print(e)
@@ -66,9 +65,7 @@ class image_converter:
 		if len(contours) >= 2:
 			smaller_contour_area = cv2.contourArea(contours[-1])
 			print(smaller_contour_area)
-
-			#previous value of the contour_area was 2500
-			if smaller_contour_area > 800:
+			if smaller_contour_area > 1000:
 				# contour detection
 
 				print("Entering contour detection")
@@ -79,8 +76,8 @@ class image_converter:
 				# img_gray = v
 				# img_gray = masked_img[:,:,2]
 
-				# # apply binary thresholding cv2.THRESH_BINARY + 
-				ret, thresh = cv2.threshold(masked_img,0,255,cv2.THRESH_BINARY | cv2.THRESH_OTSU)
+				# # apply binary thresholding
+				ret, thresh = cv2.threshold(masked_img, 150, 255, cv2.THRESH_BINARY)
 
 				# detect contours on the binary image using cv2.CHAIN_APPROX_SIMPLE
 				contours, hierarchy = cv2.findContours(image=thresh, mode=cv2.RETR_EXTERNAL, 
@@ -130,16 +127,18 @@ class image_converter:
 				img_copy = img.copy()
 
 				# draw contours on original image 
-				# box = np.int0(box)
-				# cv2.drawContours(img_copy,[box],0,(0,0,255),2)
+				box = np.int0(box)
+				cv2.drawContours(img,[box],0,(0,0,255),2)
 
 				matrix = cv2.getPerspectiveTransform(src_pts, dst_pts)
 				result = cv2.warpPerspective(img_copy, matrix, (dst_width, dst_height))
 
+				# convert image from BGR to RGB
+				result = cv2.cvtColor(result, cv2.COLOR_BGR2RGB)
 
 				# crop image to only license plate
 				# convert image to grayscale
-				im_gray = cv2.cvtColor(np.float32(result), cv2.COLOR_BGR2GRAY)
+				im_gray = cv2.cvtColor(np.float32(result), cv2.COLOR_RGB2GRAY)
 
 				# crop to only license plate by summing columns and finding colour changes
 				im_arr = np.array(im_gray)
@@ -149,8 +148,7 @@ class image_converter:
 
 				colour_threshold = 50
 
-				col_idx = []
-				print("col_idx initialized " + col_idx.shape) 
+				col_idx = [] 
 
 				for i in range(1, len(sum)):
 					current_row = sum[i]
@@ -163,24 +161,12 @@ class image_converter:
 				filter_threshold = 100
 				col_idx = np.array(col_idx)
 				col_idx = col_idx[np.where(col_idx > filter_threshold)]
-                print(col_idx.shape)
-                print(len(sum) - filter_threshold)
 				col_idx = col_idx[np.where(col_idx < (len(sum)-filter_threshold))]
-                # print(col_idx)
 
 				top = col_idx[0] 
 				bottom = col_idx[-1] 
 
-				print(top)
-				print(bottom)
-				print(result.shape)
-
-				# (left, top, right, bottom)
-				# pos = (0, top, 600, bottom)
-				#crop_im = result.crop(pos)
-				crop_im = result[0:600, top:bottom, :]
-
-				print(crop_im.shape)
+				crop_im = result[top:bottom, 0:600, :]
 
 				# resize image to 600 x 298
 				resize_img = cv2.resize(crop_im, dsize=(600,298), interpolation=cv2.INTER_CUBIC)
@@ -206,14 +192,14 @@ class image_converter:
 					im = test_image
 
 					for i in range(4):
-						crop_im = np.array(im[pos[i][0]:pos[i][2], pos[i][1]:pos[i][3]])
+						crop_im = im[pos[i][1]:pos[i][3], pos[i][0]:pos[i][2], :]
 						normalized_im = np.array([crop_im/255.])
 
 						global sess1
 						global graph1
 						with graph1.as_default():
 							set_session(sess1)
-							NN_prediction = self.plate_NN.predict(normalized_im)
+							prediction = self.plate_NN.predict(normalized_im)
 
 
 						# prediction = loaded_model.predict(normalized_im) # array of probabilities
@@ -238,7 +224,7 @@ class image_converter:
 
 					return predicted_license_plate
 
-				# print(preprocess_input(resize_img))
+				print(preprocess_input(resize_img))
 
 
 
