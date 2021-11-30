@@ -53,6 +53,8 @@ class robot_navigation:
     def callback(self,data):
         try:
           img = self.bridge.imgmsg_to_cv2(data, "bgr8")
+          cv2.imshow("image feed", img)
+          cv2.waitKey(2)
           oneThird = img[360:-1, 445:835] #for all the functions just pass in this
 
           blurred = cv2.GaussianBlur(oneThird, (7, 7), 0)
@@ -113,12 +115,16 @@ class robot_navigation:
                 if (self.detect_pedestrain(oneThird)):
                   self.count_ped += 1
                   self.no_ped = 0
+                  if (self.count_ped > 2):
+                    print("TIME TOOOOO MOVEEEEEE")
+                    self.crosswalk = 1 
+                    self.number_red_lines = 1
                   print("PEDESTRIAN")
                 else:
                   self.no_ped += 1
                   print("no ped count " + str(self.no_ped)) 
                 # self.detect_pedestrain(oneThird)
-                if (self.no_ped > 1 or self.count_ped > 3):
+                if (self.no_ped > 1):
                   print("TIME TOOOOO MOVEEEEEE")
                   self.crosswalk = 1 
                   self.number_red_lines = 1
@@ -145,6 +151,7 @@ class robot_navigation:
               move.linear.x = 0.6
               move.angular.z = 0.1
               self.nav_pub.publish(move)
+              self.number_red_lines = 1
               rospy.sleep(0.55)
               move.linear.x = 0.4
               move.angular.z = 0.1
