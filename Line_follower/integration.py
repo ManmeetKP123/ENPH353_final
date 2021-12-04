@@ -1,7 +1,6 @@
 #! /usr/bin/env python
 
 import rospy
-import time
 import roslib
 import sys
 import cv2
@@ -36,18 +35,13 @@ class image_converter:
 		self.plate_number = 0
 		self.predict = None
 		self.fourth = 0
-
 		self.list_of_plates = []
-
 	def callback(self, data):
 		try:
 			img = self.bridge.imgmsg_to_cv2(data, "bgr8")
 
 		except CvBridgeError as e:
 			print(e)
-
-		# cv2.imshow("Image", img)
-		# cv2.waitKey(2)
 
 		pre_mask_img = cv2.medianBlur(img,5)
 		pre_mask_img = cv2.cvtColor(pre_mask_img, cv2.COLOR_BGR2HSV)
