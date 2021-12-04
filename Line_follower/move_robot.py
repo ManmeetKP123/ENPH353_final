@@ -1,6 +1,7 @@
 #! /usr/bin/env python
 # from _typeshed import Self 
 from logging import FATAL, currentframe, fatal
+from pickle import FALSE
 import sys
 import rospy
 import cv2 
@@ -26,7 +27,7 @@ class robot_navigation:
         self.plate_pub = rospy.Publisher("/license_plate", String, queue_size=1)
 
         self.P = 9.25 #previously was 7
-        self.linear_speed = 0.1
+        self.linear_speed = 0.08
 
         self.team_id = "Vroom"
         self.team_pswd = "vroom24"
@@ -41,14 +42,17 @@ class robot_navigation:
         self.number_red_lines = 0
         self.angular_increase = 0
         self.sequence_ran = False
-      
+
+        time.sleep(0.1) 
         self.crosswalk = 0
+        self.red_line_saw = 0
+        self.timerrrrr = rospy.get_time()
+        self.stopppp = False
 
 
         self.last_frame = np.zeros((20, 20, 3), np.uint8) #just a placeholder to initiliaze this variable
         self.diff_threshold = cv2.cvtColor(np.zeros((359, 400, 3), np.uint8), cv2.COLOR_BGR2GRAY)
         self.max_threshold = cv2.cvtColor(np.zeros((359, 400, 3), np.uint8), cv2.COLOR_BGR2GRAY)
-        time.sleep(1) 
 
     def callback(self,data):
         try:
@@ -63,14 +67,15 @@ class robot_navigation:
           mask = cv2.inRange(blurred, lower_hsv, upper_hsv)
           # cv2.imshow("gaussian blur", blurred)
           # cv2.waitKey(1)
-          move = Twist()
+          move = Twist()          
 
-          if (self.motion_boolean == False):
+          if (self.motion_boolean == False and self.stopppp == False):
             self.startTime = rospy.get_time()
             print("time elapsed " + str(rospy.get_time() - self.startTime))
             print("this do be the starting time " + str(self.startTime))
             self.motion_boolean = True
-          else:
+            
+          elif(self.stopppp == False):
             # print("time elapsed " + str(rospy.get_time() - self.startTime))
             if ((rospy.get_time() - self.startTime) < 1.8):
               print("moving straight")
@@ -98,12 +103,19 @@ class robot_navigation:
               cv2.imshow("circle", frame_ball)
               cv2.waitKey(1)
 
-              if((self.find_red_line(img) and self.number_red_lines == 0)):
+              if((self.find_red_line(img) and self.number_red_lines == 0) and ((rospy.get_time() - self.red_line_saw) > 1.7)):
+                
+                # print("inside if statement")
+                # if (self.detect_pedestrain(oneThird) == False):
+                #   print("TIME TOOOOO MOVEEEEEE")
+                #   self.crosswalk = 1 
+                #   self.number_red_lines = 1
+                # else:
                 move.linear.x = 0
                 move.angular.z = 0
                 self.nav_pub.publish(move)
 
-                rospy.sleep(0.7)
+                # rospy.sleep(0.5)
                 # if (self.angular_increase < 2):
                 #   move.angular.z = 0.4
                 #   self.angular_increase += 1
@@ -115,21 +127,26 @@ class robot_navigation:
                 if (self.detect_pedestrain(oneThird)):
                   self.count_ped += 1
                   self.no_ped = 0
-                  if (self.count_ped > 2):
-                    print("TIME TOOOOO MOVEEEEEE")
-                    self.crosswalk = 1 
-                    self.number_red_lines = 1
+                  # if (self.count_ped > 2):
+                  #   print("TIME TOOOOO MOVEEEEEE")
+                  #   self.crosswalk = 1 
+                  #   self.number_red_lines = 1
                   print("PEDESTRIAN")
                 else:
                   self.no_ped += 1
                   print("no ped count " + str(self.no_ped)) 
-                # self.detect_pedestrain(oneThird)
-                if (self.no_ped > 1):
+                if (self.count_ped > 2):
+                  self.red_line_saw = rospy.get_time()
                   print("TIME TOOOOO MOVEEEEEE")
                   self.crosswalk = 1 
                   self.number_red_lines = 1
+                # self.detect_pedestrain(oneThird)
+                # else:
+                #   print("TIME TOOOOO MOVEEEEEE")
+                #   self.crosswalk = 1 
+                #   self.number_red_lines = 1
               else:
-                print("inside PID")
+                # print("inside PID")
                 self.count_ped = 0
                 self.no_ped = 0
                 self.number_red_lines = 0
@@ -149,30 +166,54 @@ class robot_navigation:
 
             if (self.crosswalk == 1):
               move.linear.x = 0.6
-              move.angular.z = 0.1
+              move.angular.z = 0.2
               self.nav_pub.publish(move)
               self.number_red_lines = 1
-              rospy.sleep(0.55)
+              rospy.sleep(0.8)
+              print("first line")
+
               move.linear.x = 0.4
               move.angular.z = 0.1
               self.nav_pub.publish(move)
-              rospy.sleep(0.2)
+              rospy.sleep(0.25)
+              print("second line")
+
               move.linear.x = 0.2
-              move.angular.z = 0.3
-              self.nav_pub.publish(move)
+              move.angular.z = 0.25
               self.crosswalk = 0
+              self.nav_pub.publish(move)
+              rospy.sleep(0.2)
+              move.linear.x = 0.1
+              move.angular.z = 0.25
+              self.crosswalk = 0
+              self.nav_pub.publish(move)
               rospy.sleep(0.1)
+              self.red_line_saw = rospy.get_time()
+              print("red line time " + str(rospy.get_time() - self.red_line_saw))
+              # move.linear.x = 0.1
+              # move.angular.z = 0
+              # self.nav_pub.publish(move)
+              # rospy.sleep(0.4)
+              # print("third line")
               # move.linear.x = 0.3
               # move.angular.z = 0.7
               # self.nav_pub.publish(move)
-              self.crosswalk = 0
-              self.number_red_lines = 1
-              img = self.bridge.imgmsg_to_cv2(data, "bgr8")
-              rospy.sleep(1.2)
+              # rospy.sleep(1.2)
 
             else:
               self.nav_pub.publish(move) 
-              self.last_frame = oneThird            
+              self.last_frame = oneThird   
+          else:
+            move = Twist()
+            move.linear.x = 0
+            move.angular.z = 0
+            self.nav_pub.publish(move)
+          
+          print("TIme difference " + str(rospy.get_time() - self.timerrrrr))
+          if (rospy.get_time() - self.timerrrrr > 120):
+            print("TIme to stopppppppppppppp")
+            self.stopppp = True
+
           
         except CvBridgeError as e:
             print(e)  
@@ -197,8 +238,8 @@ class robot_navigation:
       # cv2.waitKey(1)
       b = np.nonzero(croppedBin == 0)[0]
       
-      if (b.size > 120):
-        print(b.size)
+      if (b.size > 100):
+        # print(b.size)
         print("found a red line")
         return True
       return False
@@ -225,7 +266,7 @@ class robot_navigation:
         # print(str(nonZeroEntries) + " non zero pixels")
 
         # nonZeroEntries < 1000
-      if (nonZeroEntries > 100):
+      if (nonZeroEntries > 250):
         print("pedestrian detected")
         return True
       return False

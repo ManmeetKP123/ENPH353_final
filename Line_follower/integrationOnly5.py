@@ -32,10 +32,17 @@ class image_converter:
 
 		self.team_id = "Vroom"
 		self.team_pswd = "vroom88"
-		self.plate_detected = rospy.get_time()
+		self.plate_first_detected = False
+		self.plate_last_detected = False
 		self.plate_number = 0
 		self.predict = None
 		self.fourth = 0
+
+		self.accumulative_counter = 0
+		self.got_3 = False
+		self.got_5 = False
+		self.got_1 = False
+		self.got_2 = False
 
 		self.list_of_plates = []
 
@@ -67,7 +74,7 @@ class image_converter:
 
 		masked_img = 0
 
-		parkingIDs = [2, 3, 4, 5, 6, 1] #added 7 because it keeps sending the garbage values
+		# parkingIDs = [2, 3, 4, 5, 6, 1, 2] #added 7 because it keeps sending the garbage values
 
 		for lower, upper in hsv_ranges:
 			pre_mask_img_copy = pre_mask_img.copy()
@@ -253,7 +260,7 @@ class image_converter:
 					if (self.predict != None):
 						self.list_of_plates.append(self.predict)
 						print("Prediction:", self.predict)
-						self.plate_detected = rospy.get_time()				
+						self.plate_first_detected = True	
 
 				except:
 					pass
@@ -261,37 +268,39 @@ class image_converter:
 				
 				# print(self.plate_detected)
 		
+
 		if (self.predict == None):
-			# rospy.get_time() - self.plate_detected
-			diff = rospy.get_time() - self.plate_detected
+			self.accumulative_counter +=1
 
-			# if (self.plate_number == 0 and len(self.list_of_plates) > 3):
-			# 	most_frequent = max(self.list_of_plates, key = self.list_of_plates.count)
-			# 	self.list_of_plates = []
-			# 	self.sendPlates(most_frequent, parkingIDs[self.plate_number])
-			# 	self.plate_number += 1
-			
-			# elif ((diff > 2 and diff < 3) and len(self.list_of_plates) > 5):
-			# 	if(self.list_of_plates.contains('TT77')):
-			# 		self.list_of_plates.remove('TT77')
-			# self.list_of_plates.append(self.predict) #count the frequency of each string or confidence levels
-			# # and send only the ones that have the highest confidence levels or have the most frequent letters
-			# print("made it here part 2")
-			# diff = rospy.get_time() - self.plate_detected
-
-			if (diff > 2 and diff < 3):
-				# size = len(self.list_of_plates)
-				# index = int(size/3.0)
-				# self.list_of_plates = self.list_of_plates[index:2*index]
-				if 'TT77' in self.list_of_plates:
-					self.list_of_plates.remove('TT77')
+			print("Accumulative counter:" + str(self.accumulative_counter))
+	
+			if self.accumulative_counter > 300 and self.got_3 == False:
+				self.list_of_plates = self.list_of_plates[-10:]
 				most_frequent = max(self.list_of_plates, key = self.list_of_plates.count)
-				print("BROOOOOOO" + most_frequent)
-				
 				self.list_of_plates = []
-				self.sendPlates(most_frequent, parkingIDs[self.plate_number])
-				# self.predict = None
-				self.plate_number += 1
+				self.sendPlates(most_frequent, 3)
+				self.got_3 = True
+
+			elif self.accumulative_counter > 900 and self.got_5 == False:
+				self.list_of_plates = self.list_of_plates[-10:]
+				most_frequent = max(self.list_of_plates, key = self.list_of_plates.count)
+				self.list_of_plates = []
+				self.sendPlates(most_frequent, 5)
+				self.got_5 = True
+
+			elif self.accumulative_counter > 1450 and self.got_1 == False:
+				self.list_of_plates = self.list_of_plates[-10:]
+				most_frequent = max(self.list_of_plates, key = self.list_of_plates.count)
+				self.list_of_plates = []
+				self.sendPlates(most_frequent, 1)
+				self.got_1 = True
+			
+			elif self.accumulative_counter > 1700 and self.got_2 == False:
+				self.list_of_plates = self.list_of_plates[-10:]
+				most_frequent = max(self.list_of_plates, key = self.list_of_plates.count)
+				self.list_of_plates = []
+				self.sendPlates(most_frequent, 2)
+				self.got_2 = True
 
 
 	def sendPlates(self, licencePlate, parkingID):
