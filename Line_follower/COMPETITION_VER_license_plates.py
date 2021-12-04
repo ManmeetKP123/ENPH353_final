@@ -1,15 +1,12 @@
 #! /usr/bin/env python
 
 import rospy
-import time
-import roslib
 import sys
 import cv2
 from std_msgs.msg import String
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge, CvBridgeError
 import numpy as np
-from geometry_msgs.msg import Twist
 
 import tensorflow as tf
 from tensorflow.keras import models
@@ -25,7 +22,6 @@ class image_converter:
 
 	def __init__(self):
 		self.bridge = CvBridge()
-		self.nav_pub = rospy.Publisher("/R1/cmd_vel",Twist, queue_size=1)
 		self.image_sub = rospy.Subscriber("/R1/pi_camera/image_raw", Image, self.callback)
 		self.plate_pub = rospy.Publisher("/license_plate", String, queue_size=1)
 		self.plate_NN = models.load_model('/home/fizzer/ros_ws/src/controller_pkg/Line_follower/hopesandprayers.h5')
