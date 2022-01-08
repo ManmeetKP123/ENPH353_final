@@ -4,7 +4,7 @@ vehicles.
 The file structure of the project is as follows: *talk about file structure*
 The general overview is as follows: *talk about a very very vague / general idea*
 
-Our general strategy for the competition incorporated the following components:
+Our general strategy for the competition incorporated the following elements:
 - Using HSV thresholding for road detection and finding the centroid of the road
 - Using PID for driving and controlling the robot’s motion around the outer and inner loop 
 - Detecting movement and the presence of a pedestrian through HSV thresholding and change in pixels in subsequent frames
