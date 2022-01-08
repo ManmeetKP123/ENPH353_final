@@ -5,9 +5,9 @@ The file structure of the project is as follows: *talk about file structure*
 The general overview is as follows: *talk about a very very vague / general idea*
 
 Our general strategy for the competition incorporated the following components:
--Using HSV thresholding for road detection and finding the centroid of the road
--Using PID for driving and controlling the robot’s motion around the outer and inner loop 
-*Detecting movement and the presence of a pedestrian through HSV thresholding and change in pixels in subsequent frames
+- Using HSV thresholding for road detection and finding the centroid of the road
+- Using PID for driving and controlling the robot’s motion around the outer and inner loop 
+* Detecting movement and the presence of a pedestrian through HSV thresholding and change in pixels in subsequent frames
 Extracting license plates from parked cars through HSV thresholding, contour detection, and perspective transform 
 Reading license plates from extracted images using a CNN
 Generating data points and applying Gaussian blur to better represent simulation conditions 
