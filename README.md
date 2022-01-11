@@ -1,6 +1,6 @@
 # Autonomous Parking Violation Detector
 This repo was for our final project for ENPH 353. The goal was to program a self-driving car to collect the parking IDs of parked vehicles. We did this using PID and a convolutional neural network (CNN). 
-### Note: This repo does not contain all the files and folders used in the competition as our instructor re-uses them every year and would like for them to be private.
+##### Note: This repo does not contain all the files and folders used in the competition as our instructor re-uses them every year and would like for them to be private.
 
 The file structure of our project is as follows: 
 The general overview is as follows:
